@@ -10,22 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel   # Arch Linux + base‑devel
-      options: --privileged         # mkarchiso için gerekli
+      options: --privileged         # mkarchiso’nun çalışması için gerekli
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install required packages
         run: |
-          # Güncel paket listesi
+          # Paket listelerini güncelle
           pacman -Sy --noconfirm
-          # Temel derleme araçları
+          # Derleme ve ISO oluşturma için zorunlu paketler
           pacman -S --noconfirm base-devel archiso unzip
           # mkarchiso’nun ihtiyaç duyduğu yardımcı paketler
           pacman -S --noconfirm dosfstools xorriso mtools \
-                     arch-install-scripts git \
-                     sudo
+                     arch-install-scripts git sudo
 
       - name: Extract source archive
         run: |
@@ -35,7 +34,7 @@ jobs:
         run: |
           cd tengos_extracted
           chmod +x build.sh               # çalıştırılabilir izin
-          ./build.sh                       # ← burada mkarchiso çağrılır
+          ./build.sh                       # ← burada mkarchiso çalıştırılıyor
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
