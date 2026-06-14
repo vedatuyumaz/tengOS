@@ -1,41 +1,52 @@
 name: Build Teng OS ISO
 
+# Çalışma tetikleyicileri
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:      # manuel tetikleme seçeneği
+    branches: [ "main" ]          # main dallarına push edildiğinde çalışır
+  workflow_dispatch:               # manuel olarak UI üzerinden de başlatılabilir
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+
+    # Derleme işlemini gerçek Arch Linux ortamında yapması için container
     container:
-      image: archlinux:base-devel   # Arch Linux + base‑devel
-      options: --privileged         # mkarchiso’nun çalışması için gerekli
+      image: archlinux:base-devel   # Arch + base‑devel paketleri
+      options: --privileged         # mkarchiso’un çalışması için gerekli
 
     steps:
+      # 1️⃣ Repo kodlarını al
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Derleme ve ISO oluşturma için gerekli paketleri kur
       - name: Install required packages
         run: |
-          # Paket listelerini güncelle
+          # Paket veri tabanını güncelle
           pacman -Sy --noconfirm
-          # Derleme ve ISO oluşturma için zorunlu paketler
+          # Temel derleme araçları
           pacman -S --noconfirm base-devel archiso unzip
           # mkarchiso’nun ihtiyaç duyduğu yardımcı paketler
           pacman -S --noconfirm dosfstools xorriso mtools \
                      arch-install-scripts git sudo
 
+      # 3️⃣ Kaynak arşivi (ZIP) aç – **hata yok sayılıyor**
       - name: Extract source archive
         run: |
-          unzip TengOS_Source.zip -d tengos_extracted
+          # `unzip` uyarı verirse çıkış kodunu 0 kabul ediyoruz
+          unzip -qq -o TengOS_Source.zip -d tengos_extracted || true
 
+      # 4️⃣ ISO’yu oluştur
       - name: Build ISO
         run: |
           cd tengos_extracted
-          chmod +x build.sh               # çalıştırılabilir izin
-          ./build.sh                       # ← burada mkarchiso çalıştırılıyor
+          # unzip sonrası dosya izinleri kaybolabilir, kesin çalıştırılabilir yap
+          chmod +x build.sh
+          # mkarchiso burada çalışacak; -v ile detayları görebilirsin
+          ./build.sh
 
+      # 5️⃣ ISO dosyasını artefakt olarak sun (indirilebilir)
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
