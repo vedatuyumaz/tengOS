@@ -1,0 +1,38 @@
+name: Build Teng OS ISO
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+      options: --privileged
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm archiso unzip base-devel
+
+      - name: Extract source
+        run: unzip TengOS_Source.zip -d tengos_extracted
+
+      - name: Build ISO
+        run: |
+          cd tengos_extracted
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Upload ISO Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TengOS-ISO
+          path: tengos_extracted/out/*.iso
+          retention-days: 7
