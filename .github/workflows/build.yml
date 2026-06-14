@@ -3,34 +3,41 @@ name: Build Teng OS ISO
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:
+  workflow_dispatch:      # manuel tetikleme seçeneği
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
     container:
-      image: archlinux:base-devel
-      options: --privileged
+      image: archlinux:base-devel   # Arch Linux + base‑devel
+      options: --privileged         # mkarchiso için gerekli
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install required packages
         run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm archiso unzip base-devel
+          # Güncel paket listesi
+          pacman -Sy --noconfirm
+          # Temel derleme araçları
+          pacman -S --noconfirm base-devel archiso unzip
+          # mkarchiso’nun ihtiyaç duyduğu yardımcı paketler
+          pacman -S --noconfirm dosfstools xorriso mtools \
+                     arch-install-scripts git \
+                     sudo
 
-      - name: Extract source
-        run: unzip TengOS_Source.zip -d tengos_extracted
+      - name: Extract source archive
+        run: |
+          unzip TengOS_Source.zip -d tengos_extracted
 
       - name: Build ISO
         run: |
           cd tengos_extracted
-          chmod +x build.sh
-          ./build.sh
+          chmod +x build.sh               # çalıştırılabilir izin
+          ./build.sh                       # ← burada mkarchiso çağrılır
 
-      - name: Upload ISO Artifact
+      - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
           name: TengOS-ISO
